@@ -7,19 +7,18 @@ require (
 	berty.tech/go-orbit-db v1.13.2
 	github.com/armon/go-metrics v0.3.6 // indirect
 	github.com/aws/aws-sdk-go v1.43.34
-	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/dgraph-io/ristretto v0.1.0
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/go-hclog v0.16.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
-	github.com/ipfs/go-ipfs v0.12.1
+	github.com/ipfs/go-ipfs v0.13.1
 	github.com/ipfs/go-ipfs-api v0.3.0
-	github.com/ipfs/interface-go-ipfs-core v0.5.2
+	github.com/ipfs/interface-go-ipfs-core v0.7.0
 	github.com/ledisdb/ledisdb v0.0.0-20200510135210-d35789ec47e6
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/philippgille/gokv/encoding v0.6.0
