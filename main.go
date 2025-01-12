@@ -1,22 +1,17 @@
-/*
- * @Author: gitsrc
- * @Date: 2021-03-08 13:09:44
- * @LastEditors: gitsrc
- * @LastEditTime: 2021-08-20 10:50:01
- * @FilePath: /IceFireDB/main.go
- */
-
 package main
 
 import (
 	"fmt"
-	ipfs_log "github.com/IceFireDB/IceFireDB/driver/ipfs-log"
-	"github.com/IceFireDB/icefiredb-ipfs-log/stores/levelkv"
 	"io"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"path/filepath"
 	"sync/atomic"
+
+	ipfs_log "github.com/IceFireDB/IceFireDB/driver/ipfs-log"
+	"github.com/IceFireDB/icefiredb-ipfs-log/stores/levelkv"
+	"github.com/joho/godotenv"
 
 	badger "github.com/dgraph-io/badger/v3"
 	lediscfg "github.com/ledisdb/ledisdb/config"
@@ -32,7 +27,6 @@ import (
 
 	// "github.com/IceFireDB/IceFireDB/driver/orbitdb"
 	"github.com/IceFireDB/IceFireDB/driver/oss"
-	"github.com/IceFireDB/IceFireDB/utils"
 	"github.com/IceFireDB/icefiredb-crdt-kv/kv"
 )
 
@@ -44,6 +38,13 @@ var (
 	// debug
 	debug bool
 )
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("error loading environment variables file", err)
+	}
+}
 
 func main() {
 	conf.Name = "IceFireDB"
@@ -108,7 +109,7 @@ func main() {
 	conf.Restore = restore
 	conf.ConnOpened = connOpened
 	conf.ConnClosed = connClosed
-	conf.CmdRewriteFunc = utils.RedisCmdRewrite
+	//conf.CmdRewriteFunc = utils.RedisCmdRewrite
 
 	fmt.Printf("start with Storage Engine: %s\n", storageBackend)
 	rafthub.Main(conf)

@@ -31,14 +31,13 @@ Based on cutting-edge computer science, the IceFireDB project integrates new ide
 
 The core of IceFireDB architecture is geographically distributed event source and decentralized Log source, with log-level CRDT replication.In order to realize the consistency of replication, IceFireDB provides a stable decentralized networking model, which allows the combination of public networks among different sites. Multiple IceFireDB nodes can be run inside each site, and RAFT network can be formed between nodes, which ensures the data consistency and stable storage within the same site.
 
-![image](https://res.cloudinary.com/malloc/image/upload/v1666341372/icefiredb/docs/197144174-9f2f400f-5c6d-4ee0-9cfe-5e725dcb179e_sorguc.png)
-
+![image](https://github.com/user-attachments/assets/b706f093-7d71-4253-94b7-0ecb55bfbcef)
 
 # Decentralized database engine
 
 <p align="center">
 <img 
-    src="./icefiredb-bridge.png" 
+    src="https://github.com/user-attachments/assets/cce03ccd-b6e9-427e-a492-51637db04991" 
      alt="icefiredb-bridge">
 </p>
 
@@ -47,28 +46,37 @@ IceFireDB is a database built for web3 and web2. The core mission of the project
 
 <p align="center">
 <img 
-    src="./imgs/project_purpose.png" 
+    src="https://github.com/user-attachments/assets/9e35731b-fea1-4e11-88a1-089323a7f2aa"
      alt="project_purpose">
 </p>
 
-1. High performance.
-2. Support LSM disk, OSS, IPFS underlying storage.
-3. Distributed consistency（support raft\p2p-crdt\ipfs-log mode）
-4. Based on IPFS decentralized storage, build a persistent data distributed storage layer.（beta version）
-5. Support P2P automatic networking, build decentralized NoSQL and SQL data synchronization.
-6. Support decentralized consistent kv storage engine ([icefiredb-crdt-kv](https://github.com/IceFireDB/icefiredb-crdt-kv) and [icefiredb-ipfs-log](https://github.com/IceFireDB/icefiredb-ipfs-log) is supporting)
-7. Build a blockchain mechanism based on EVM virtual machine. (Smart contract layer construction through IceGiant combined with FVM)
-8. Build an immutable transparent log witness layer between web2 and web3, build a data hot and cold hybrid structure and an immutable data bridge layer. (inspired by google trillian-witness and IPLD) 
-9. Support kv metadata layer and mixed storage structure of hot and cold. （web2 area support）
-10. More advanced cache implementation, faster LSM persistent storage（Source of ideas: https://dl.acm.org/doi/10.1145/3448016.3452819 ）（Support the performance improvement of blockchain full-node）
+
+| Feature                                                                                                    | Status                        |
+|------------------------------------------------------------------------------------------------------------|-------------------------------|
+| High performance                                                                                           | Ongoing optimization           |
+| Support LSM disk, OSS, IPFS underlying storage                                                             | Implemented                   |
+| Distributed consistency (support Raft, p2p-crdt, IPFS-log modes)                                           | Implemented                   |
+| Based on IPFS decentralized storage, build a persistent data distributed storage layer                     | Beta version                  |
+| Support P2P automatic networking, build decentralized NoSQL and SQL data synchronization                   | Beta version                  |
+| Support decentralized consistent KV storage engine ([icefiredb-crdt-kv](https://github.com/IceFireDB/icefiredb-crdt-kv) and [icefiredb-ipfs-log](https://github.com/IceFireDB/icefiredb-ipfs-log)) | Beta version                  |
+| Support AI vector database storage and instructions                                                        | In progress                         |
+| Integrate with [NATS](https://nats.io/) for high-performance decentralized networking                      | In progress                  |
+| Support KV and SQL immutable storage engine (combined with [immudb](https://github.com/codenotary/immudb)) | In progress                  |
+| Supports scalable, auditable, and high-performance tamper-resistant logging (combined with [qed](https://github.com/BBVA/qed)) | Planned                    |
+| Build an immutable transparent log witness layer between Web2 and Web3, build a data hot and cold hybrid structure, and an immutable data bridge layer (inspired by Google Trillian-Witness and IPLD) | Planned             |
+| Support KV metadata layer and mixed storage structure of hot and cold                                      | Planned                    |
+| More advanced cache implementation, faster LSM persistent storage ([Source](https://dl.acm.org/doi/10.1145/3448016.3452819)) | Planned              |
+
 
 # Documentation center
 
 <p align="center">
 <img 
-    src="IceFireDB_Architecture.png" 
+    src="https://github.com/user-attachments/assets/f127e510-db14-489b-aec4-479688c20e6c" 
      alt="IceFireDB_Architecture">
 </p>
+
+
 
 [**Documentation center**](https://www.icefiredb.xyz/icefiredb_docs/) : https://www.icefiredb.xyz/icefiredb_docs
 
@@ -171,6 +179,7 @@ IceFireDB originated from the distributed NoSQL database in the web2 scenario. W
 * https://github.com/ledisdb/ledisdb
 * https://github.com/dgraph-io/badger
 * https://github.com/ipfs/ipfs
+* https://github.com/libp2p
 
 
 <table>
@@ -178,6 +187,7 @@ IceFireDB originated from the distributed NoSQL database in the web2 scenario. W
     <td align="center"><a href="https://protocol.ai/"><img src="https://user-images.githubusercontent.com/34047788/188373221-4819fd05-ef2f-4e53-b784-dcfffe9c018c.png" width="100px;" alt=""/><br /><sub><b>Protocol Labs</b></sub></a></td>
     <td align="center"><a href="https://filecoin.io/"><img src="https://user-images.githubusercontent.com/34047788/188373584-e245e0bb-8a3c-4773-a741-17e4023bde65.png" width="100px;" alt=""/><br /><sub><b>Filecoin</b></sub></a></td>
   <td align="center"><a href="https://fvm.filecoin.io/"><img src="https://user-images.githubusercontent.com/34047788/220075045-48286b37-b708-4ecf-94f5-064c55e79fa3.png" width="110px;" alt="FVM"/><br /><sub><b>FVM</b></sub></a></td>
+  <td align="center"><a href="https://libp2p.io/"><img src="https://github.com/IceFireDB/.github/assets/34047788/36e39958-76ad-4b3a-96e1-1614e87ac1a3" width="100px;" alt="libp2p"/><br /><sub><b>libp2p</b></sub></a></td>  
 </tr>
 </table>
 

@@ -25,9 +25,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/IceFireDB/IceFireDB-Proxy/utils"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/utils"
 
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/p2p"
+	"github.com/IceFireDB/components-go/p2p"
 )
 
 // Synchronize notification to peer node middleware

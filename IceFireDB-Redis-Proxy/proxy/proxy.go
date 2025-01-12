@@ -26,22 +26,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/cache"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/monitor"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/p2p"
+	"github.com/IceFireDB/components-go/cache"
+	"github.com/IceFireDB/components-go/p2p"
 
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/bareneter"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/config"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/rediscluster"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/router"
-	proxycluster "github.com/IceFireDB/IceFireDB-Proxy/pkg/router/redisCluster"
-	proxynode "github.com/IceFireDB/IceFireDB-Proxy/pkg/router/redisNode"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/pkg/config"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/pkg/router"
+	proxycluster "github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/pkg/router/redisCluster"
+	proxynode "github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/pkg/router/redisNode"
+	"github.com/IceFireDB/components-go/bareneter"
+	rediscluster "github.com/chasex/redis-go-cluster"
 	redisclient "github.com/gomodule/redigo/redis"
 )
 
 type Proxy struct {
 	Cache        *cache.Cache
-	Monitor      *monitor.Monitor
 	proxyCluster *rediscluster.Cluster
 	proxyClient  *redisclient.Pool
 	server       *bareneter.Server
@@ -76,14 +74,12 @@ func New() (*Proxy, error) {
 	} else {
 		p.proxyCluster, err = rediscluster.NewCluster(
 			&rediscluster.Options{
-				StartNodes:             strings.Split(config.Get().RedisDB.StartNodes, ","),
-				ConnTimeout:            time.Duration(config.Get().RedisDB.ConnTimeOut) * time.Second,
-				ReadTimeout:            time.Duration(config.Get().RedisDB.ConnReadTimeOut) * time.Second,
-				WriteTimeout:           time.Duration(config.Get().RedisDB.ConnWriteTimeOut) * time.Second,
-				KeepAlive:              config.Get().RedisDB.ConnPoolSize,
-				AliveTime:              time.Duration(config.Get().RedisDB.ConnAliveTimeOut) * time.Second,
-				SlaveOperateRate:       config.Get().RedisDB.SlaveOperateRate,
-				ClusterUpdateHeartbeat: config.Get().RedisDB.ClusterUpdateHeartbeat,
+				StartNodes:   strings.Split(config.Get().RedisDB.StartNodes, ","),
+				ConnTimeout:  time.Duration(config.Get().RedisDB.ConnTimeOut) * time.Second,
+				ReadTimeout:  time.Duration(config.Get().RedisDB.ConnReadTimeOut) * time.Second,
+				WriteTimeout: time.Duration(config.Get().RedisDB.ConnWriteTimeOut) * time.Second,
+				KeepAlive:    config.Get().RedisDB.ConnPoolSize,
+				AliveTime:    time.Duration(config.Get().RedisDB.ConnAliveTimeOut) * time.Second,
 			})
 		if err != nil {
 			return nil, err
@@ -94,7 +90,7 @@ func New() (*Proxy, error) {
 	// if enable p2p command pubsub mode,then create p2p pubsub handle
 	if config.Get().P2P.Enable {
 		// create p2p element
-		p2phost := p2p.NewP2P(config.Get().P2P.ServiceDiscoveryID) // create p2p
+		p2phost := p2p.NewP2P(config.Get().P2P.ServiceDiscoveryID, config.Get().P2P.NodeHostIP, config.Get().P2P.NodeHostPort)
 		p.P2pHost = p2phost
 
 		log.Println("Completed P2P Setup")
@@ -111,7 +107,7 @@ func New() (*Proxy, error) {
 
 		log.Println("Connected to P2P Service Peers")
 
-		p.P2pSubPub, err = p2p.JoinPubSub(p.P2pHost, "redis-client", config.Get().P2P.ServiceCommandTopic)
+		p.P2pSubPub, err = p2p.JoinPubSub(p.P2pHost, "icefiredb-redis-proxy-client", config.Get().P2P.ServiceCommandTopic)
 
 		if err != nil {
 			log.Println(err)
@@ -120,11 +116,8 @@ func New() (*Proxy, error) {
 		log.Printf("Successfully joined [%s] P2P channel. \n", config.Get().P2P.ServiceCommandTopic)
 	}
 
-	p.StartMonitor()
-
 	p.router.Use(router.IgnoreCMDMiddleware(config.Get().IgnoreCMD.Enable, config.Get().IgnoreCMD.CMDList))
 
-	p.router.Use(router.KeyMonitorMiddleware(p.Monitor, config.Get().Monitor.SlowQueryConf.SlowQueryIgnoreCMD))
 	if config.Get().P2P.Enable {
 		p.router.Use(router.PubSubMiddleware(p.router, p.P2pSubPub))
 	}

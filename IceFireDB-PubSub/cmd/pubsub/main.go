@@ -1,22 +1,3 @@
-/*
- *
- *  * Licensed to the Apache Software Foundation (ASF) under one or more
- *  * contributor license agreements.  See the NOTICE file distributed with
- *  * this work for additional information regarding copyright ownership.
- *  * The ASF licenses this file to You under the Apache License, Version 2.0
- *  * (the "License"); you may not use this file except in compliance with
- *  * the License.  You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
- *
- */
-
 package main
 
 import (
@@ -33,9 +14,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/IceFireDB/IceFireDB-PubSub/pkg/config"
-	"github.com/IceFireDB/IceFireDB-PubSub/proxy"
-	"github.com/IceFireDB/IceFireDB-PubSub/utils"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-PubSub/pkg/config"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-PubSub/proxy"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-PubSub/utils"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -49,8 +30,8 @@ var (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "redis proxy"
-	app.Description = "IceFireDB proxy, easier to use IceFireDB, support resp protocol."
+	app.Name = "IceFireDB-PubSub"
+	app.Description = "IceFireDB-PubSub, easier to use P2P Events, support resp protocol."
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:     "config,c",
@@ -59,7 +40,6 @@ func main() {
 			Value:    "config/config.yaml",
 		},
 	}
-	//showBanner()
 	app.Before = initConfig
 	app.Action = start
 	err := app.Run(os.Args)
@@ -96,23 +76,33 @@ func start(c *cli.Context) error {
 	for sig := range sigs {
 		switch sig {
 		case syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT:
+			logrus.Info("Received shutdown signal, initiating graceful shutdown...")
 			cancel()
-			ok := make(chan struct{})
-			go func() {
-				wg.Wait()
-				ok <- struct{}{}
-			}()
-			select {
-			case <-ok:
-				logrus.Info("shutdown proxy ！！！！")
-			case <-time.After(time.Second * 5):
-				logrus.Info("context deadline exceeded ！！！！")
-			}
-			os.Exit(0)
+
+			// Use sync.Once to ensure shutdown is only performed once
+			var once sync.Once
+			once.Do(func() {
+				ok := make(chan struct{})
+				go func() {
+					wg.Wait()
+					close(ok)
+				}()
+
+				select {
+				case <-ok:
+					logrus.Info("All goroutines have gracefully shut down.")
+				case <-time.After(time.Second * 5):
+					logrus.Warn("Context deadline exceeded, forcing shutdown.")
+				}
+
+				os.Exit(0)
+			})
+
 		case syscall.SIGHUP:
-			logrus.Info("+++++++++++++++++++++++++++++")
+			logrus.Info("Received SIGHUP signal, performing reload or reconfiguration if supported.")
 		}
 	}
+
 	return nil
 }
 
@@ -141,12 +131,4 @@ func debug() {
 			_ = http.ListenAndServe(":"+addr, nil)
 		}, nil)
 	}
-}
-
-func showBanner() {
-	logo := `╦═╗┌─┐┌┬┐┬┌─┐  ╔═╗┬─┐┌─┐─┐ ┬┬ ┬
-╠╦╝├┤  │││└─┐  ╠═╝├┬┘│ │┌┴┬┘└┬┘
-╩╚═└─┘─┴┘┴└─┘  ╩  ┴└─└─┘┴ └─ ┴ `
-	fmt.Println(logo)
-	fmt.Println("Build Version: ", BuildVersion, "  Date: ", BuildDate)
 }
