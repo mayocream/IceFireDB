@@ -39,7 +39,6 @@ func init() {
 
 	serverInfo.Server.OS = runtime.GOOS
 	serverInfo.Server.ProceessID = os.Getpid()
-	return
 }
 
 func (i *info) RegisterExtInfo(f ExtInfoFunc) {
@@ -111,18 +110,22 @@ func (i *info) dumpAll(buf *bytes.Buffer) {
 	buf.Write(Delims)
 	i.dumpGC(buf)
 	buf.Write(Delims)
-	// i.dumpReplication(buf)
 }
 
 func (i *info) dumpServer(buf *bytes.Buffer) {
 	buf.WriteString("# Server\r\n")
 
-	i.dumpPairs(buf, infoPair{"os", i.Server.OS},
+	threadNum, _ := runtime.ThreadCreateProfile(nil)
+	i.dumpPairs(buf,
+		infoPair{"os", i.Server.OS},
+		infoPair{"arch", runtime.GOARCH},
 		infoPair{"process_id", i.Server.ProceessID},
 		infoPair{"addr", conf.Addr},
 		infoPair{"http_addr", ldsCfg.HttpAddr},
 		infoPair{"readonly", ldsCfg.Readonly},
 		infoPair{"goroutine_num", runtime.NumGoroutine()},
+		infoPair{"gomaxprocs", runtime.GOMAXPROCS(0)},
+		infoPair{"thread_num", threadNum},
 		infoPair{"cgo_call_num", runtime.NumCgoCall()},
 		infoPair{"resp_client_num", atomic.LoadInt64(&respClientNum)},
 		infoPair{"ledisdb_version", ledis.Version},
@@ -161,7 +164,7 @@ func (i *info) dumpGC(buf *bytes.Buffer) {
 
 	var st deb.GCStats
 	st.Pause = make([]time.Duration, count)
-	// st.PauseQuantiles = make([]time.Duration, count)
+
 	deb.ReadGCStats(&st)
 
 	h := make([]string, 0, count)
@@ -181,32 +184,16 @@ func (i *info) dumpStore(buf *bytes.Buffer) {
 	buf.WriteString("# Store\r\n")
 	s := le.StoreStat()
 
-	// getNum := s.GetNum.Get()
-	// getTotalTime := s.GetTotalTime.Get()
-
-	// gt := int64(0)
-	// if getNum > 0 {
-	// 	gt = getTotalTime.Nanoseconds() / (getNum * 1e3)
-	// }
-
-	// commitNum := s.BatchCommitNum.Get()
-	// commitTotalTime := s.BatchCommitTotalTime.Get()
-
-	// ct := int64(0)
-	// if commitNum > 0 {
-	// 	ct = commitTotalTime.Nanoseconds() / (commitNum * 1e3)
-	// }
-
 	i.dumpPairs(buf, infoPair{"name", ldsCfg.DBName},
-		infoPair{"get", s.GetNum},
-		infoPair{"get_missing", s.GetMissingNum},
-		infoPair{"put", s.PutNum},
-		infoPair{"delete", s.DeleteNum},
+		infoPair{"get", s.GetNum.Get()},
+		infoPair{"get_missing", s.GetMissingNum.Get()},
+		infoPair{"put", s.PutNum.Get()},
+		infoPair{"delete", s.DeleteNum.Get()},
 		infoPair{"get_total_time", s.GetTotalTime.Get().String()},
-		infoPair{"iter", s.IterNum},
-		infoPair{"iter_seek", s.IterSeekNum},
-		infoPair{"iter_close", s.IterCloseNum},
-		infoPair{"batch_commit", s.BatchCommitNum},
+		infoPair{"iter", s.IterNum.Get()},
+		infoPair{"iter_seek", s.IterSeekNum.Get()},
+		infoPair{"iter_close", s.IterCloseNum.Get()},
+		infoPair{"batch_commit", s.BatchCommitNum.Get()},
 		infoPair{"batch_commit_total_time", s.BatchCommitTotalTime.Get().String()},
 	)
 }

@@ -21,9 +21,10 @@ package config
 
 import (
 	"errors"
+	"net"
 	"strings"
 
-	"github.com/IceFireDB/IceFireDB-PubSub/pkg/rediscluster"
+	rediscluster "github.com/chasex/redis-go-cluster"
 	"github.com/spf13/viper"
 )
 
@@ -57,8 +58,12 @@ func InitConfig() error {
 		CmdToUpper(_config.IgnoreCMD.CMDList)
 	}
 
-	if _config.Monitor.SlowQueryConf.Enable && len(_config.Monitor.SlowQueryConf.SlowQueryIgnoreCMD) > 0 {
-		CmdToUpper(_config.Monitor.SlowQueryConf.SlowQueryIgnoreCMD)
+	if net.ParseIP(_config.P2P.NodeHostIP) == nil {
+		_config.P2P.NodeHostIP = "0.0.0.0"
+	}
+
+	if _config.P2P.NodeHostPort < 0 || _config.P2P.NodeHostPort > 65535 {
+		_config.P2P.NodeHostPort = 0
 	}
 	return nil
 }
