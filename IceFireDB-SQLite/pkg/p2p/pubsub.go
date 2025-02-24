@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
 )
 
 // Represents the default fallback room and user names
 // if they aren't provided when the app is started
 const defaultclient = "client"
-const defaulttopic = "pubsub"
+const defaulttopic = "icefiredb-sqlite-pubsub"
 
 // A structure that represents a PubSub Chat Room
 type PubSub struct {
@@ -65,7 +65,7 @@ func (c chatlog) String() string {
 func JoinPubSub(p2phost *P2P, clientName string, topicName string) (*PubSub, error) {
 
 	// Create a PubSub topic with the room name
-	topic, err := p2phost.PubSub.Join(fmt.Sprintf("pub-sub-p2p-%s", topicName))
+	topic, err := p2phost.PubSub.Join(fmt.Sprintf("icefiredb-sqlite-pub-sub-p2p-%s", topicName))
 	// Check the error
 	if err != nil {
 		return nil, err
@@ -132,7 +132,7 @@ func (cr *PubSub) PubLoop() {
 			// Create a ChatMessage
 			m := chatmessage{
 				Message:    message,
-				SenderID:   cr.selfid.Pretty(),
+				SenderID:   cr.selfid.String(),
 				SenderName: cr.ClientName,
 			}
 
@@ -155,7 +155,7 @@ func (cr *PubSub) PubLoop() {
 
 // A method of PubSub that continously reads from the subscription
 // until either the subscription or pubsub context closes.
-// The recieved message is parsed sent into the inbound channel
+// The received message is parsed sent into the inbound channel
 func (cr *PubSub) SubLoop() {
 	// Start loop
 	for {

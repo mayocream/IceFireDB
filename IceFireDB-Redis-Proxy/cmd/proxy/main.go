@@ -33,9 +33,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/config"
-	"github.com/IceFireDB/IceFireDB-Proxy/proxy"
-	"github.com/IceFireDB/IceFireDB-Proxy/utils"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/pkg/config"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/proxy"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/utils"
 	"github.com/spf13/viper"
 	"github.com/urfave/cli"
 )
@@ -104,13 +104,13 @@ func start(c *cli.Context) error {
 			}()
 			select {
 			case <-ok:
-				logrus.Info("shutdown proxy ！！！！")
+				logrus.Info("shutdown proxy")
 			case <-time.After(time.Second * 5):
-				logrus.Info("context deadline exceeded ！！！！")
+				logrus.Info("context deadline exceeded")
 			}
 			os.Exit(0)
 		case syscall.SIGHUP:
-			logrus.Info("+++++++++++++++++++++++++++++")
+			logrus.Info("catch syscall.SIGHUP")
 		}
 	}
 	return nil

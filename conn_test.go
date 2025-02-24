@@ -1,3 +1,4 @@
+//go:build alltest
 // +build alltest
 
 package main
@@ -14,8 +15,8 @@ import (
 	"github.com/ledisdb/ledisdb/ledis"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/go-redis/redis/v8"
 	lediscfg "github.com/ledisdb/ledisdb/config"
+	"github.com/redis/go-redis/v9"
 	"github.com/tidwall/uhaha"
 )
 

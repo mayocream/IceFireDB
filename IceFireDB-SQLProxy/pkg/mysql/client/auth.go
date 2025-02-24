@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
-	"github.com/IceFireDB/IceFireDB-SQLProxy/pkg/mysql/packet"
+	"slices"
 
-	. "github.com/IceFireDB/IceFireDB-SQLProxy/pkg/mysql/mysql"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-SQLProxy/pkg/mysql/packet"
+
+	. "github.com/IceFireDB/IceFireDB/IceFireDB-SQLProxy/pkg/mysql/mysql"
 
 	"github.com/pingcap/errors"
 )
@@ -17,15 +19,6 @@ const defaultAuthPluginName = AUTH_NATIVE_PASSWORD
 // defines the supported auth plugins
 var supportedAuthPlugins = []string{AUTH_NATIVE_PASSWORD, AUTH_SHA256_PASSWORD, AUTH_CACHING_SHA2_PASSWORD}
 
-// helper function to determine what auth methods are allowed by this client
-func authPluginAllowed(pluginName string) bool {
-	for _, p := range supportedAuthPlugins {
-		if pluginName == p {
-			return true
-		}
-	}
-	return false
-}
 
 // See: http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::Handshake
 func (c *Conn) readInitialHandshake() error {
@@ -107,9 +100,10 @@ func (c *Conn) readInitialHandshake() error {
 // generate auth response data according to auth plugin
 //
 // NOTE: the returned boolean value indicates whether to add a \NUL to the end of data.
-//       it is quite tricky because MySQL server expects different formats of responses in different auth situations.
-//       here the \NUL needs to be added when sending back the empty password or cleartext password in 'sha256_password'
-//       authentication.
+//
+//	it is quite tricky because MySQL server expects different formats of responses in different auth situations.
+//	here the \NUL needs to be added when sending back the empty password or cleartext password in 'sha256_password'
+//	authentication.
 func (c *Conn) genAuthResponse(authData []byte) ([]byte, bool, error) {
 	// password hashing
 	switch c.authPluginName {
@@ -138,7 +132,7 @@ func (c *Conn) genAuthResponse(authData []byte) ([]byte, bool, error) {
 
 // See: http://dev.mysql.com/doc/internals/en/connection-phase-packets.html#packet-Protocol::HandshakeResponse
 func (c *Conn) writeAuthHandshake() error {
-	if !authPluginAllowed(c.authPluginName) {
+	if !slices.Contains(supportedAuthPlugins, c.authPluginName) {
 		return fmt.Errorf("unknow auth plugin name '%s'", c.authPluginName)
 	}
 
