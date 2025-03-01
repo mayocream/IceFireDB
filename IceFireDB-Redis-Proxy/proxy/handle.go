@@ -23,10 +23,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/RedSHandle"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/bareneter"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/codis/credis"
-	"github.com/IceFireDB/IceFireDB-Proxy/pkg/router"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-Redis-Proxy/pkg/router"
+	"github.com/IceFireDB/components-go/RESPHandle"
+	"github.com/IceFireDB/components-go/bareneter"
+	"github.com/IceFireDB/components-go/codis/credis"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,13 +35,13 @@ func (p *Proxy) handle(conn bareneter.Conn) {
 		_ = conn.Close()
 	}()
 	localConn := conn.NetConn()
-	localWriteHandle := RedSHandle.NewWriterHandle(localConn)
+	localWriteHandle := RESPHandle.NewWriterHandle(localConn)
 	decoder := credis.NewDecoderSize(localConn, 1024)
 	for {
 		resp, err := decoder.Decode()
 		if err != nil {
 			/*if err.Error() != io.EOF.Error() && strings.Index(err.Error(), net.ErrClosed.Error()) == -1 {
-				logrus.Errorf("RESP协议解码失败:%v", err)
+				logrus.Errorf("RESP fail:%v", err)
 			}*/
 			return
 		}
@@ -74,7 +74,7 @@ func (p *Proxy) handle(conn bareneter.Conn) {
 				return
 			}
 			_ = router.WriteError(localWriteHandle, err)
-			logrus.Errorf("redis命令执行错误:%s , %v", commandArgs, err)
+			logrus.Errorf("resp command exec fail:%s , %v", commandArgs, err)
 			return
 		}
 	}

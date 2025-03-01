@@ -1,11 +1,3 @@
-/*
- * @Author: gitsrc
- * @Date: 2021-03-08 17:57:04
- * @LastEditors: gitsrc
- * @LastEditTime: 2021-08-20 10:43:33
- * @FilePath: /IceFireDB/lists.go
- */
-
 package main
 
 import (
@@ -17,13 +9,11 @@ import (
 	"github.com/siddontang/go/hack"
 	"github.com/tidwall/redcon"
 	"github.com/tidwall/uhaha"
-	rafthub "github.com/tidwall/uhaha"
 )
 
 func init() {
-	//队列的block类型指令均需要避免，危险操作
 	//All block type instructions of the queue need to be avoided, dangerous operation
-	//conf.AddReadCommand("BLPOP", cmdBLPOP) //此处危险：如果是raft写指令，则raft会进行指令回滚=>卡住raft，如果是raft读指令，则会因为raft无法回滚队列消费日志，出现队列脏数据
+	//conf.AddReadCommand("BLPOP", cmdBLPOP) //Danger here: If it is a Raft write command, Raft will perform command rollback => stuck Raft. If it is a Raft read command, then Raft will not be able to roll back the queue consumption log, and dirty data in the queue will appear.
 	conf.AddWriteCommand("RPUSH", cmdRPUSH)
 	conf.AddWriteCommand("LPOP", cmdLPOP)
 	conf.AddReadCommand("LINDEX", cmdLINDEX)
@@ -38,7 +28,7 @@ func init() {
 	conf.AddWriteCommand("LCLEAR", cmdLCLEAR)
 	conf.AddWriteCommand("LMCLEAR", cmdLMCLEAR)
 	//Timeout instruction: be cautious, the raft log is rolled back, causing dirty data: timeout LEXPIRE => LEXPIREAT
-	conf.AddWriteCommand("LEXPIRE", cmdLEXPIRE) //超时时间指令：谨慎，raft日志回滚，造成脏数据:超时时间  LEXPIRE => LEXPIREAT
+	conf.AddWriteCommand("LEXPIRE", cmdLEXPIRE)
 	conf.AddWriteCommand("LEXPIREAT", cmdLEXPIREAT)
 	conf.AddReadCommand("LTTL", cmdLTTL)
 	// conf.AddWriteCommand("LPERSIST", cmdLPERSIST)
@@ -49,7 +39,7 @@ func init() {
 
 func cmdLTRIM(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 4 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	var start int64
@@ -73,7 +63,7 @@ func cmdLTRIM(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLKEYEXISTS(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	n, err := ldb.LKeyExists([]byte(args[1]))
@@ -85,7 +75,7 @@ func cmdLKEYEXISTS(m uhaha.Machine, args []string) (interface{}, error) {
 
 // func cmdLPERSIST(m uhaha.Machine, args []string) (interface{}, error) {
 // 	if len(args) != 2 {
-// 		return nil, rafthub.ErrWrongNumArgs
+// 		return nil, uhaha.ErrWrongNumArgs
 // 	}
 
 // 	n, err := ldb.LPersist([]byte(args[1]))
@@ -97,7 +87,7 @@ func cmdLKEYEXISTS(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLTTL(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	v, err := ldb.LTTL([]byte(args[1]))
@@ -109,7 +99,7 @@ func cmdLTTL(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLEXPIREAT(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	timestamp, err := ledis.StrInt64([]byte(args[2]), nil)
@@ -117,7 +107,6 @@ func cmdLEXPIREAT(m uhaha.Machine, args []string) (interface{}, error) {
 		return nil, err
 	}
 
-	//如果时间戳小于当前时间，则进行删除操作 :此处有边界条件：因为是队列，raft 日志回滚是顺序的
 	//If the timestamp is less than the current time, delete operation: There are boundary conditions here: because it is a queue, the rollback of the raft log is sequential
 	if timestamp < time.Now().Unix() {
 		_, err := ldb.LClear([]byte(args[1]))
@@ -136,7 +125,7 @@ func cmdLEXPIREAT(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLEXPIRE(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	duration, err := ledis.StrInt64([]byte(args[2]), nil)
@@ -163,7 +152,7 @@ func cmdLEXPIRE(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLMCLEAR(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	keys := make([][]byte, len(args)-1)
@@ -179,7 +168,7 @@ func cmdLMCLEAR(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLCLEAR(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	n, err := ldb.LClear([]byte(args[1]))
@@ -192,7 +181,7 @@ func cmdLCLEAR(m uhaha.Machine, args []string) (interface{}, error) {
 func cmdRPOPLPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 
 	if len(args) != 3 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 	source, dest := []byte(args[1]), []byte(args[2])
 
@@ -229,7 +218,7 @@ func cmdRPOPLPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLLEN(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	n, err := ldb.LLen([]byte(args[1]))
@@ -241,7 +230,7 @@ func cmdLLEN(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLSET(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 4 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	index, err := ledis.StrInt64([]byte(args[2]), nil)
@@ -257,7 +246,7 @@ func cmdLSET(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLRANGE(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 4 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	var start int64
@@ -283,7 +272,7 @@ func cmdLRANGE(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdRPOP(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	v, err := ldb.RPop([]byte(args[1]))
@@ -295,7 +284,7 @@ func cmdRPOP(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 3 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	argList := make([][]byte, len(args)-2)
@@ -312,7 +301,7 @@ func cmdLPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLINDEX(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 3 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 	index, err := ledis.StrInt64([]byte(args[2]), nil)
 	if err != nil {
@@ -334,7 +323,7 @@ func cmdLINDEX(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdLPOP(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) != 2 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	v, err := ldb.LPop([]byte(args[1]))
@@ -346,7 +335,7 @@ func cmdLPOP(m uhaha.Machine, args []string) (interface{}, error) {
 
 func cmdRPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 	if len(args) < 3 {
-		return nil, rafthub.ErrWrongNumArgs
+		return nil, uhaha.ErrWrongNumArgs
 	}
 
 	argList := make([][]byte, len(args)-2)
@@ -361,10 +350,10 @@ func cmdRPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 	return redcon.SimpleInt(n), nil
 }
 
-//此处危险：如果是raft写指令，则raft会进行指令回滚=>卡住raft，如果是raft读指令，则会因为raft无法回滚队列消费日志，出现队列脏数据
+//Danger here: If it is a Raft write command, Raft will perform command rollback => stuck Raft. If it is a Raft read command, then Raft will not be able to roll back the queue consumption log, and dirty data in the queue will appear.
 // func cmdBLPOP(m uhaha.Machine, args []string) (interface{}, error) {
 // 	if len(args) < 3 {
-// 		return nil, rafthub.ErrWrongNumArgs
+// 		return nil, uhaha.ErrWrongNumArgs
 // 	}
 
 // 	keys, timeout, err := lParseBPopArgs(args)
@@ -382,7 +371,7 @@ func cmdRPUSH(m uhaha.Machine, args []string) (interface{}, error) {
 
 func lParseBPopArgs(argsOrigin []string) (keys [][]byte, timeout time.Duration, err error) {
 	if len(argsOrigin) < 3 {
-		err = rafthub.ErrWrongNumArgs
+		err = uhaha.ErrWrongNumArgs
 		return
 	}
 

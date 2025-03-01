@@ -3,15 +3,16 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"github.com/IceFireDB/IceFireDB-SQLite/pkg/config"
-	"github.com/IceFireDB/IceFireDB-SQLite/pkg/mysql/mysql"
-	"github.com/IceFireDB/IceFireDB-SQLite/pkg/p2p"
-	"github.com/IceFireDB/IceFireDB-SQLite/utils"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/IceFireDB/IceFireDB/IceFireDB-SQLite/pkg/config"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-SQLite/pkg/mysql/mysql"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-SQLite/pkg/p2p"
+	"github.com/IceFireDB/IceFireDB/IceFireDB-SQLite/utils"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -30,7 +31,10 @@ func InitSQLite(ctx context.Context, filename string) *sql.DB {
 	}
 	if config.Get().P2P.Enable {
 		// create p2p element
-		p2pHost = p2p.NewP2P(config.Get().P2P.ServiceDiscoveryID) // create p2p
+		p2pHost = p2p.NewP2P(config.Get().P2P.ServiceDiscoveryID,
+			config.Get().P2P.NodeHostIP,
+			config.Get().P2P.NodeHostPort)
+
 		logrus.Info("Completed P2P Setup")
 
 		// Connect to peers with the chosen discovery method
@@ -45,7 +49,7 @@ func InitSQLite(ctx context.Context, filename string) *sql.DB {
 
 		logrus.Info("Connected to P2P Service Peers")
 		var err error
-		p2pPubSub, err = p2p.JoinPubSub(p2pHost, "mysql-client", config.Get().P2P.ServiceCommandTopic)
+		p2pPubSub, err = p2p.JoinPubSub(p2pHost, "icefiredb-sqlite-client", config.Get().P2P.ServiceCommandTopic)
 		if err != nil {
 			panic(err)
 		}
@@ -55,7 +59,6 @@ func InitSQLite(ctx context.Context, filename string) *sql.DB {
 	return db
 }
 
-// 这些语句开头的都需要通过节点同步
 var DMLSQL = []string{
 	"BEGIN",
 	"BEGIN TRANSACTION",
@@ -70,7 +73,6 @@ var DMLSQL = []string{
 	"DROP",
 }
 
-// 执行DDL、DML语句
 func Exec(sql string) (*mysql.Result, error) {
 	prefix := sql
 	if len(sql) > 20 {
@@ -79,13 +81,11 @@ func Exec(sql string) (*mysql.Result, error) {
 	prefix = strings.ToUpper(prefix)
 	for _, v := range DMLSQL {
 		if strings.HasPrefix(prefix, v) {
-			// dml 语句
 			result, err := db.Exec(sql)
 			if err != nil {
 				return nil, err
 			}
 			if config.Get().P2P.Enable {
-				// 通知对等节点
 				p2pPubSub.Outbound <- sql
 				logrus.Infof("Outbound sql: %s", sql)
 			}
@@ -102,7 +102,6 @@ func Exec(sql string) (*mysql.Result, error) {
 		}
 	}
 
-	// 是查询语句
 	resp, err := db.Query(sql, nil)
 	if err != nil {
 		return nil, err
@@ -130,15 +129,14 @@ func Exec(sql string) (*mysql.Result, error) {
 		f.OrgTable = tableName
 		f.OrgName = tableName
 		f.Charset = 33 // utf8
-		// 列类型
 		// https://dev.mysql.com/doc/internals/en/com-query-response.html#column-type
 		f.Type, f.ColumnLength = getColumnTypeAndLen(columnType[k].DatabaseTypeName())
 		//mysql.MYSQL_TYPE_VARCHAR
 		res.Fields[k] = f
 	}
 
-	c := make([]interface{}, len(column)) // 临时存储每行数据
-	for index := range c {                // 为每一列初始化一个指针
+	c := make([]interface{}, len(column))
+	for index := range c {
 		var a interface{}
 		c[index] = &a
 	}

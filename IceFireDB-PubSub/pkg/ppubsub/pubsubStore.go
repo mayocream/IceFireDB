@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/IceFireDB/IceFireDB-PubSub/pkg/RedSHandle"
-	"github.com/IceFireDB/IceFireDB-PubSub/pkg/p2p"
-	"github.com/IceFireDB/IceFireDB-PubSub/pkg/router"
-	"github.com/libp2p/go-libp2p-core/peer"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/sirupsen/logrus"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/IceFireDB/IceFireDB/IceFireDB-PubSub/pkg/router"
+	"github.com/IceFireDB/components-go/RESPHandle"
+	"github.com/IceFireDB/components-go/p2p"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sirupsen/logrus"
 )
 
 var pss *pubsubStore
@@ -31,7 +32,7 @@ type pubsubStore struct {
 	ctx          context.Context
 	p2p          *p2p.P2P
 	join         map[string]*PubSub
-	writer       map[string]map[string]*RedSHandle.WriterHandle
+	writer       map[string]map[string]*RESPHandle.WriterHandle
 }
 
 func NewPubsubStore(ctx context.Context, p2p *p2p.P2P) *pubsubStore {
@@ -39,7 +40,7 @@ func NewPubsubStore(ctx context.Context, p2p *p2p.P2P) *pubsubStore {
 		ctx:    ctx,
 		p2p:    p2p,
 		join:   make(map[string]*PubSub),
-		writer: make(map[string]map[string]*RedSHandle.WriterHandle),
+		writer: make(map[string]map[string]*RESPHandle.WriterHandle),
 	}
 	return s
 }
@@ -57,7 +58,7 @@ func Pub(topicName string, message string) error {
 	return nil
 }
 
-func Sub(local *RedSHandle.WriterHandle, topicName string) (*PubSub, error) {
+func Sub(local *RESPHandle.WriterHandle, topicName string) (*PubSub, error) {
 	if _, ok := pss.join[topicName]; !ok {
 		_, err := JoinPubSub(pss.p2p, "redis-client", topicName)
 		if err != nil {
@@ -67,7 +68,7 @@ func Sub(local *RedSHandle.WriterHandle, topicName string) (*PubSub, error) {
 	}
 	lp := fmt.Sprintf("%p", local)
 	if _, ok := pss.writer[topicName]; !ok {
-		pss.writer[topicName] = make(map[string]*RedSHandle.WriterHandle)
+		pss.writer[topicName] = make(map[string]*RESPHandle.WriterHandle)
 	}
 	pss.writer[topicName][lp] = local
 	ps := pss.join[topicName]
@@ -195,7 +196,7 @@ func (cr *PubSub) PubLoop() {
 			// Create a ChatMessage
 			m := chatmessage{
 				Message:    message,
-				SenderID:   cr.selfid.Pretty(),
+				SenderID:   cr.selfid.String(),
 				SenderName: cr.ClientName,
 			}
 
@@ -218,7 +219,7 @@ func (cr *PubSub) PubLoop() {
 
 // A method of PubSub that continously reads from the subscription
 // until either the subscription or pubsub context closes.
-// The recieved message is parsed sent into the inbound channel
+// The received message is parsed sent into the inbound channel
 func (cr *PubSub) SubLoop() {
 	// Start loop
 	for {
@@ -258,7 +259,6 @@ func (cr *PubSub) SubLoop() {
 	}
 }
 
-// 广播
 func (cr *PubSub) Writer() {
 	for {
 		msg := <-cr.Inbound
@@ -282,7 +282,7 @@ func (cr *PubSub) printPeer() {
 		// Iterate over the list of peers
 		for _, p := range peers {
 			// Generate the pretty version of the peer ID
-			peerid := p.Pretty()
+			peerid := p.String()
 			// Add the peer ID to the peer box
 			if _, ok := peersAll[peerid]; ok {
 				peersAll[peerid]++
